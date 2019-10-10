@@ -37,11 +37,10 @@ class SgcnspiderSpider(scrapy.Spider):
             picture_url = 'https://bbs.sgcn.com/code.php'+picture[0]
             item["image_Path"] = picture_url
             item["type"] = getattr(self, 'category', False)
-            # print(f'爬取{item["name"]}的电话图片,地址{item["image_Path"]}')
+            print(f'爬取{item["name"]}的电话图片,地址{item["image_Path"]}')
             yield item
         else:
-            pass
-            # print(f'{item["name"]}的电话图片不存在')
+            print(f'{item["name"]}的电话图片不存在')
 
 
 
