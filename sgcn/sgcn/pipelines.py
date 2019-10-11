@@ -7,27 +7,18 @@
 import requests
 import os
 from aip import AipOcr
-from redis import StrictRedis
+import pymysql
 
 class SgcnPipeline(object):
-    def __init__(self, redisHost, redisPort, redisDB):
-        self.redis = StrictRedis(
-            host=redisHost,
-            port=redisPort,
-            db=redisDB
-        )
-
-    @classmethod
-    def from_settings(cls, settings):
-        redisHost = settings.get('REDISHOST')
-        redisPort = settings.get('REDISPORT')
-        reidsDB = settings.get('REDISDB1')
-
-        return cls(
-            redisHost,
-            redisPort,
-            reidsDB
-        )
+    def __init__(self):
+        self.connection = pymysql.connect(host='127.0.0.1',
+                                  port=3306,
+                                  database='sgcn',
+                                  user='dkborn',
+                                  password='ddk123',
+                                  charset='utf8',
+                                  )
+        self.cursor = self.connection.cursor()
 
     def process_item(self, item, spider):
         picfile = f'E:/{item["type"]}/{item["name"]}.PNG'
@@ -45,10 +36,28 @@ class SgcnPipeline(object):
         client = AipOcr(APP_ID, API_KEY, SECRECT_KEY)
 
         filename = os.path.basename(picfile)
-        i = open(picfile, 'rb')
-        img = i.read()
-        message = client.basicGeneral(img)  # 通用文字识别，每天 50 000 次免费
-        info = message.get('words_result')[0]["words"]
-        print('识别图片：'+filename+'该图片电话为：'+ info)
-        self.redis.sadd(name, info)
-        i.close()
+        try:
+            i = open(picfile, 'rb')
+            img = i.read()
+            message = client.basicGeneral(img)  # 通用文字识别，每天 50 000 次免费
+            if message:
+                info = message.get('words_result')[0]["words"]
+                print('识别图片：' + filename + '该图片电话为：' + info)
+                self.save_in_mysql(name, info)
+            i.close()
+        except:
+            print('无此图片')
+
+    def save_in_mysql(self, name, info):
+        sql = "insert into info(sinfo, sphone) values('%s','%s');" % (name, info)
+        # print(sql)
+        try:
+            self.cursor.execute(sql)
+            print('插入成功')
+        except pymysql.err.IntegrityError:
+            self.connection.rollback()
+        except Exception as e:
+            print(e)
+
+    def __del__(self):
+        self.connection.commit()

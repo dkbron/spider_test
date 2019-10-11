@@ -66,7 +66,7 @@ DEFAULT_REQUEST_HEADERS = {
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'sgcn.pipelines.SgcnPipeline': 300,
+   # 'sgcn.pipelines.SgcnPipeline': 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
